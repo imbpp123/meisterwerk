@@ -1,0 +1,63 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566" 
+      - "8000:8000" 
+    environment:
+      - SERVICES=dynamodb
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data 
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - app-network
+      
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    command: ["postgres", "-c", "listen_addresses=0.0.0.0"]
+    ports:
+      - "5432:35432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=app_db
+    networks:
+      - app-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    ports:
+      - "8080:8080"
+    environment:
+      - AWS_REGION=us-east-1
+      - DYNAMODB_ENDPOINT=http://localstack:4566
+    depends_on:
+      - localstack
+      - postgres
+    networks:
+      - app-network
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: consumer
+    environment:
+      - AWS_REGION=us-east-1
+      - DYNAMODB_ENDPOINT=http://localstack:4566
+    depends_on:
+      - localstack
+      - postgres
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

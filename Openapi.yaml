@@ -1,0 +1,331 @@
+openapi: 3.1.0
+info:
+  title: Quote Management API
+  version: 1.0.0
+  description: API to manage quotes for customers.
+
+servers:
+  - url: http://localhost:8080/v1
+    description: Local development server
+
+paths:
+  /customers/{customerID}/quote:
+    get:
+      summary: Get a customer quote
+      description: Get the quote for a customer by customer ID.
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The customer's ID
+      responses:
+        '200':
+          description: Quote found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /customers/{customerID}/quote/address:
+    put:
+      summary: Update customer address
+      description: Save customer's address.
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The customer's ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressRequest'
+      responses:
+        '200':
+          description: Address updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '400':
+          description: Invalid address data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /customers/{customerID}/quote/payment:
+    put:
+      summary: Update payment information
+      description: Save or update the customer's payment method.
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The customer's ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '400':
+          description: Invalid payment data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /customers/{customerID}/quote/products:
+    post:
+      summary: Add a product to quote
+      description: Add a new product to the customer's quote.
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The customer's ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductAddRequest'
+      responses:
+        '200':
+          description: Product added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '400':
+          description: Invalid product data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /customers/{customerID}/quote/products/{productID}:
+    put:
+      summary: Update a product in quote
+      description: Update the quantity of a product in the customer's quote.
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The customer's ID
+        - name: productID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The product's ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdateRequest'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '400':
+          description: Invalid product data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Remove a product from quote
+      description: Remove a product from the customer's qutoe by ID.
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The customer's ID
+        - name: productID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The product's ID
+      responses:
+        '200':
+          description: Product removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+
+  /customers/{customerID}/quote/process:
+    post:
+      summary: Process a quote
+      description: Process a quote sending it to order processing
+      parameters:
+        - name: customerID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The customer's ID
+      responses:
+        '200':
+          description: Quote processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '404':
+          description: Quote not found
+        '400':
+          description: Invalid quote ID
+
+components:
+  schemas:
+    QuoteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        address:
+          $ref: '#/components/schemas/AddressResponse'
+        payment:
+          $ref: '#/components/schemas/PaymentResponse'
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        amount:
+          type: number
+        tax_amount:
+          type: number
+        total_amount:
+          type: number
+
+    AddressResponse:
+      type: object
+      properties:
+        address:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+
+    PaymentResponse:
+      type: object
+      properties:
+        payment_method:
+          type: string
+
+    ProductResponse:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        qty:
+          type: integer
+        amount:
+          type: number
+        tax_amount:
+          type: number
+        total_amount:
+          type: number
+
+    AddressRequest:
+      type: object
+      properties:
+        address:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+
+    PaymentRequest:
+      type: object
+      properties:
+        payment_method:
+          type: string
+
+    ProductAddRequest:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        qty:
+          type: integer
+
+    ProductUpdateRequest:
+      type: object
+      properties:
+        qty:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
